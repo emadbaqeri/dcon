@@ -25,7 +25,7 @@ impl std::str::FromStr for OutputFormat {
             "table" => Ok(OutputFormat::Table),
             "json" => Ok(OutputFormat::Json),
             "csv" => Ok(OutputFormat::Csv),
-            _ => Err(format!("Invalid output format: {}", s)),
+            _ => Err(format!("Invalid output format: {s}")),
         }
     }
 }

@@ -63,7 +63,7 @@ pub struct Cli {
     pub command: Commands,
 }
 
-async fn print_banner() {
+fn print_banner() {
     println!(
         "{}",
         r#"
@@ -90,7 +90,7 @@ fn parse_connection_url(url: &str) -> Result<ConnectionConfig, Box<dyn std::erro
     } else {
         parsed_url.username().to_string()
     };
-    let password = parsed_url.password().map(|p| p.to_string());
+    let password = parsed_url.password().map(std::string::ToString::to_string);
     let database = parsed_url.path().trim_start_matches('/');
     let database = if database.is_empty() {
         "postgres".to_string()
@@ -144,7 +144,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let cli = Cli::parse();
 
     if !cli.no_color {
-        print_banner().await;
+        print_banner();
     }
 
     let config = get_connection_config(&cli)?;
@@ -181,7 +181,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         Commands::Query { sql, database } => {
             let mut target_config = config.clone();
             if let Some(db_name) = database {
-                target_config.database = db_name.clone();
+                target_config.database.clone_from(db_name);
             }
             let client = PostgresClient::new(&target_config).await?;
             execute_query(&client, sql, &cli.format).await?;
@@ -190,7 +190,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         Commands::Interactive { database } => {
             let mut target_config = config.clone();
             if let Some(db_name) = database {
-                target_config.database = db_name.clone();
+                target_config.database.clone_from(db_name);
             }
             let client = PostgresClient::new(&target_config).await?;
             execute_interactive_mode(&client).await?;
@@ -203,18 +203,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
 // Helper functions to extract database names from commands
 fn get_database_from_table_command(cmd: &TableCommands) -> Option<String> {
     match cmd {
-        TableCommands::List { database, .. } => database.clone(),
-        TableCommands::Describe { database, .. } => database.clone(),
-        TableCommands::Create { database, .. } => database.clone(),
-        TableCommands::Drop { database, .. } => database.clone(),
+        TableCommands::List { database, .. }
+        | TableCommands::Describe { database, .. }
+        | TableCommands::Create { database, .. }
+        | TableCommands::Drop { database, .. } => database.clone(),
     }
 }
 
 fn get_database_from_crud_command(cmd: &CrudCommands) -> Option<String> {
     match cmd {
-        CrudCommands::Create { database, .. } => database.clone(),
-        CrudCommands::Read { database, .. } => database.clone(),
-        CrudCommands::Update { database, .. } => database.clone(),
-        CrudCommands::Delete { database, .. } => database.clone(),
+        CrudCommands::Create { database, .. }
+        | CrudCommands::Read { database, .. }
+        | CrudCommands::Update { database, .. }
+        | CrudCommands::Delete { database, .. } => database.clone(),
     }
 }

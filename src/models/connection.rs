@@ -18,7 +18,7 @@ impl ConnectionConfig {
         );
 
         if let Some(password) = &self.password {
-            conn_str.push_str(&format!(" password={}", password));
+            conn_str.push_str(&format!(" password={password}"));
         }
 
         conn_str

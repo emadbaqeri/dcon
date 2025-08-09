@@ -17,11 +17,11 @@ pub async fn execute_connect(
     match format {
         OutputFormat::Table => {
             let table = Table::new(&conn_info);
-            println!("{}", table);
+            println!("{table}");
         }
         OutputFormat::Json => {
             let json = serde_json::to_string_pretty(&conn_info)?;
-            println!("{}", json);
+            println!("{json}");
         }
         OutputFormat::Csv => {
             println!("Property,Value");
@@ -48,11 +48,11 @@ pub async fn execute_database_command(
             match format {
                 OutputFormat::Table => {
                     let table = Table::new(&databases);
-                    println!("{}", table);
+                    println!("{table}");
                 }
                 OutputFormat::Json => {
                     let json = serde_json::to_string_pretty(&databases)?;
-                    println!("{}", json);
+                    println!("{json}");
                 }
                 OutputFormat::Csv => {
                     println!("Database Name,Owner,Encoding,Size,Description");
@@ -71,7 +71,7 @@ pub async fn execute_database_command(
             owner,
             encoding,
         } => {
-            if !confirm_action(&format!("Create database '{}'?", name))? {
+            if !confirm_action(&format!("Create database '{name}'?"))? {
                 println!("{}", "Operation cancelled.".yellow());
                 return Ok(());
             }
@@ -81,13 +81,13 @@ pub async fn execute_database_command(
                 .await?;
             println!(
                 "{}",
-                format!("✅ Database '{}' created successfully!", name).green()
+                format!("✅ Database '{name}' created successfully!").green()
             );
         }
 
         DatabaseCommands::Drop { name, confirm } => {
             if !confirm
-                || !confirm_action(&format!("Drop database '{}'? This cannot be undone!", name))?
+                || !confirm_action(&format!("Drop database '{name}'? This cannot be undone!"))?
             {
                 println!("{}", "Operation cancelled.".yellow());
                 return Ok(());
@@ -96,7 +96,7 @@ pub async fn execute_database_command(
             client.drop_database(name).await?;
             println!(
                 "{}",
-                format!("✅ Database '{}' dropped successfully!", name).green()
+                format!("✅ Database '{name}' dropped successfully!").green()
             );
         }
 
@@ -126,11 +126,11 @@ pub async fn execute_table_command(
             match format {
                 OutputFormat::Table => {
                     let table = Table::new(&tables);
-                    println!("{}", table);
+                    println!("{table}");
                 }
                 OutputFormat::Json => {
                     let json = serde_json::to_string_pretty(&tables)?;
-                    println!("{}", json);
+                    println!("{json}");
                 }
                 OutputFormat::Csv => {
                     println!("Schema,Table Name,Type,Row Count");
@@ -147,9 +147,7 @@ pub async fn execute_table_command(
         TableCommands::Describe { table, database: _ } => {
             println!(
                 "{}",
-                format!("🔍 Table Structure: {}", table)
-                    .bright_green()
-                    .bold()
+                format!("🔍 Table Structure: {table}").bright_green().bold()
             );
 
             let columns = client.describe_table(table, None).await?;
@@ -157,11 +155,11 @@ pub async fn execute_table_command(
             match format {
                 OutputFormat::Table => {
                     let table = Table::new(&columns);
-                    println!("{}", table);
+                    println!("{table}");
                 }
                 OutputFormat::Json => {
                     let json = serde_json::to_string_pretty(&columns)?;
-                    println!("{}", json);
+                    println!("{json}");
                 }
                 OutputFormat::Csv => {
                     println!("Column Name,Data Type,Nullable,Default,Primary Key");
@@ -195,7 +193,7 @@ pub async fn execute_table_command(
             confirm,
         } => {
             if !confirm
-                || !confirm_action(&format!("Drop table '{}'? This cannot be undone!", table))?
+                || !confirm_action(&format!("Drop table '{table}'? This cannot be undone!"))?
             {
                 println!("{}", "Operation cancelled.".yellow());
                 return Ok(());
@@ -204,7 +202,7 @@ pub async fn execute_table_command(
             client.drop_table(table).await?;
             println!(
                 "{}",
-                format!("✅ Table '{}' dropped successfully!", table).green()
+                format!("✅ Table '{table}' dropped successfully!").green()
             );
         }
     }
@@ -224,16 +222,12 @@ pub async fn execute_crud_command(
             database: _,
         } => {
             let json_data: Value =
-                serde_json::from_str(data).map_err(|e| format!("Invalid JSON data: {}", e))?;
+                serde_json::from_str(data).map_err(|e| format!("Invalid JSON data: {e}"))?;
 
             let rows_affected = client.insert_data(table, &json_data).await?;
             println!(
                 "{}",
-                format!(
-                    "✅ Inserted {} row(s) into table '{}'",
-                    rows_affected, table
-                )
-                .green()
+                format!("✅ Inserted {rows_affected} row(s) into table '{table}'").green()
             );
         }
 
@@ -248,7 +242,7 @@ pub async fn execute_crud_command(
         } => {
             println!(
                 "{}",
-                format!("📖 Reading from table '{}'", table)
+                format!("📖 Reading from table '{table}'")
                     .bright_green()
                     .bold()
             );
@@ -292,10 +286,9 @@ pub async fn execute_crud_command(
             confirm,
         } => {
             let json_data: Value =
-                serde_json::from_str(data).map_err(|e| format!("Invalid JSON data: {}", e))?;
+                serde_json::from_str(data).map_err(|e| format!("Invalid JSON data: {e}"))?;
 
-            if !confirm || !confirm_action(&format!("Update table '{}' WHERE {}?", table, filter))?
-            {
+            if !confirm || !confirm_action(&format!("Update table '{table}' WHERE {filter}?"))? {
                 println!("{}", "Operation cancelled.".yellow());
                 return Ok(());
             }
@@ -303,7 +296,7 @@ pub async fn execute_crud_command(
             let rows_affected = client.update_data(table, &json_data, filter).await?;
             println!(
                 "{}",
-                format!("✅ Updated {} row(s) in table '{}'", rows_affected, table).green()
+                format!("✅ Updated {rows_affected} row(s) in table '{table}'").green()
             );
         }
 
@@ -313,8 +306,7 @@ pub async fn execute_crud_command(
             database: _,
             confirm,
         } => {
-            if !confirm
-                || !confirm_action(&format!("Delete from table '{}' WHERE {}?", table, filter))?
+            if !confirm || !confirm_action(&format!("Delete from table '{table}' WHERE {filter}?"))?
             {
                 println!("{}", "Operation cancelled.".yellow());
                 return Ok(());
@@ -323,7 +315,7 @@ pub async fn execute_crud_command(
             let rows_affected = client.delete_data(table, filter).await?;
             println!(
                 "{}",
-                format!("✅ Deleted {} row(s) from table '{}'", rows_affected, table).green()
+                format!("✅ Deleted {rows_affected} row(s) from table '{table}'").green()
             );
         }
     }
@@ -396,13 +388,13 @@ pub async fn execute_interactive_mode(client: &PostgresClient) -> Result<(), Box
                 // List databases
                 let databases = client.list_databases().await?;
                 let table = Table::new(&databases);
-                println!("{}", table);
+                println!("{table}");
             }
             "\\d" => {
                 // List tables
                 let tables = client.list_tables(false).await?;
                 let table = Table::new(&tables);
-                println!("{}", table);
+                println!("{table}");
             }
             _ => {
                 // Execute as SQL
@@ -415,7 +407,7 @@ pub async fn execute_interactive_mode(client: &PostgresClient) -> Result<(), Box
                         }
                     }
                     Err(e) => {
-                        println!("{}", format!("Error: {}", e).red());
+                        println!("{}", format!("Error: {e}").red());
                     }
                 }
             }
@@ -426,7 +418,7 @@ pub async fn execute_interactive_mode(client: &PostgresClient) -> Result<(), Box
 }
 
 fn confirm_action(message: &str) -> Result<bool, Box<dyn Error>> {
-    print!("{} (y/N): ", message);
+    print!("{message} (y/N): ");
     io::stdout().flush()?;
 
     let mut input = String::new();

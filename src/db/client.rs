@@ -19,12 +19,12 @@ impl PostgresClient {
 
         let (client, connection) = tokio_postgres::connect(&connection_string, NoTls)
             .await
-            .map_err(|e| format!("Failed to connect to PostgreSQL: {}", e))
+            .map_err(|e| format!("Failed to connect to PostgreSQL: {e}"))
             .unwrap();
 
         tokio::spawn(async move {
             if let Err(e) = connection.await {
-                eprintln!("Connection Error: {}", e);
+                eprintln!("Connection Error: {e}");
             }
         });
 
@@ -186,7 +186,7 @@ impl PostgresClient {
 
         println!(
             "{}",
-            format!("🔍 Describing table '{}.{}'...", schema, table_name).cyan()
+            format!("🔍 Describing table '{schema}.{table_name}'...").cyan()
         );
 
         let query = r#"
@@ -238,7 +238,7 @@ impl PostgresClient {
             .client
             .query(query, &[])
             .await
-            .map_err(|e| format!("Query execution failed: {}", e))
+            .map_err(|e| format!("Query execution failed: {e}"))
             .unwrap();
 
         Ok(rows)
@@ -268,7 +268,7 @@ impl PostgresClient {
             .join(", ");
 
         let placeholders = (1..=values.len())
-            .map(|i| format!("${}", i))
+            .map(|i| format!("${i}"))
             .collect::<Vec<_>>()
             .join(", ");
 
@@ -296,13 +296,13 @@ impl PostgresClient {
             .map(|s| s as &(dyn tokio_postgres::types::ToSql + Sync))
             .collect();
 
-        println!("{}", format!("📝 Executing: {}", query).dimmed());
+        println!("{}", format!("📝 Executing: {query}").dimmed());
 
         let result = self
             .client
             .execute(&query, &params)
             .await
-            .map_err(|e| format!("Insert failed: {}", e))?;
+            .map_err(|e| format!("Insert failed: {e}"))?;
 
         Ok(result)
     }
@@ -357,13 +357,13 @@ impl PostgresClient {
             where_clause
         );
 
-        println!("{}", format!("📝 Executing: {}", query).dimmed());
+        println!("{}", format!("📝 Executing: {query}").dimmed());
 
         let result = self
             .client
             .execute(&query, &params)
             .await
-            .map_err(|e| format!("Update failed: {}", e))?;
+            .map_err(|e| format!("Update failed: {e}"))?;
 
         Ok(result)
     }
@@ -379,13 +379,13 @@ impl PostgresClient {
             where_clause
         );
 
-        println!("{}", format!("📝 Executing: {}", query).dimmed());
+        println!("{}", format!("📝 Executing: {query}").dimmed());
 
         let result = self
             .client
             .execute(&query, &[])
             .await
-            .map_err(|e| format!("Delete failed: {}", e))?;
+            .map_err(|e| format!("Delete failed: {e}"))?;
 
         Ok(result)
     }
@@ -404,12 +404,12 @@ impl PostgresClient {
 
         query.push_str(&format!(" ENCODING '{}'", encoding.replace("'", "''")));
 
-        println!("{}", format!("📝 Executing: {}", query).dimmed());
+        println!("{}", format!("📝 Executing: {query}").dimmed());
 
         self.client
             .execute(&query, &[])
             .await
-            .map_err(|e| format!("Create database failed: {}", e))?;
+            .map_err(|e| format!("Create database failed: {e}"))?;
 
         Ok(())
     }
@@ -417,12 +417,12 @@ impl PostgresClient {
     pub async fn drop_database(&self, name: &str) -> Result<(), Box<dyn std::error::Error>> {
         let query = format!("DROP DATABASE \"{}\"", name.replace("\"", "\"\""));
 
-        println!("{}", format!("📝 Executing: {}", query).dimmed());
+        println!("{}", format!("📝 Executing: {query}").dimmed());
 
         self.client
             .execute(&query, &[])
             .await
-            .map_err(|e| format!("Drop database failed: {}", e))?;
+            .map_err(|e| format!("Drop database failed: {e}"))?;
 
         Ok(())
     }
@@ -430,12 +430,12 @@ impl PostgresClient {
     pub async fn drop_table(&self, name: &str) -> Result<(), Box<dyn std::error::Error>> {
         let query = format!("DROP TABLE \"{}\"", name.replace("\"", "\"\""));
 
-        println!("{}", format!("📝 Executing: {}", query).dimmed());
+        println!("{}", format!("📝 Executing: {query}").dimmed());
 
         self.client
             .execute(&query, &[])
             .await
-            .map_err(|e| format!("Drop table failed: {}", e))?;
+            .map_err(|e| format!("Drop table failed: {e}"))?;
 
         Ok(())
     }
@@ -457,28 +457,28 @@ impl PostgresClient {
         );
 
         if let Some(where_clause) = where_clause {
-            query.push_str(&format!(" WHERE {}", where_clause));
+            query.push_str(&format!(" WHERE {where_clause}"));
         }
 
         if let Some(order_by) = order_by {
-            query.push_str(&format!(" ORDER BY {}", order_by));
+            query.push_str(&format!(" ORDER BY {order_by}"));
         }
 
         if let Some(limit) = limit {
-            query.push_str(&format!(" LIMIT {}", limit));
+            query.push_str(&format!(" LIMIT {limit}"));
         }
 
         if let Some(offset) = offset {
-            query.push_str(&format!(" OFFSET {}", offset));
+            query.push_str(&format!(" OFFSET {offset}"));
         }
 
-        println!("{}", format!("📝 Executing: {}", query).dimmed());
+        println!("{}", format!("📝 Executing: {query}").dimmed());
 
         let rows = self
             .client
             .query(&query, &[])
             .await
-            .map_err(|e| format!("Select failed: {}", e))?;
+            .map_err(|e| format!("Select failed: {e}"))?;
 
         Ok(rows)
     }
@@ -499,7 +499,7 @@ impl PostgresClient {
             .client
             .query_one(&query, &[])
             .await
-            .map_err(|e| format!("Failed to get row count: {}", e))?;
+            .map_err(|e| format!("Failed to get row count: {e}"))?;
 
         let count: i64 = row.get(0);
         Ok(count)
