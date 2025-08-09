@@ -1,6 +1,6 @@
 [package]
 name = "dcon"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 description = "A powerful PostgreSQL command-line interface tool built in Rust"
 license = "MIT"

@@ -1,3 +1,23 @@
+## 1.0.0 (2025-08-09)
+
+### ⚠ BREAKING CHANGES
+
+* Contributors must now run ./scripts/install-git-hooks.sh
+after cloning to enable automatic code quality enforcement.
+
+### 🚀 Features
+
+* add comprehensive CI/CD pipeline and project documentation ([d266d25](https://github.com/emadbaqeri/dcon/commit/d266d253a1d8904ed8659afb01a08910f06b2f1e))
+* implement comprehensive Git hooks and fix all code quality issues ([fb23ce6](https://github.com/emadbaqeri/dcon/commit/fb23ce68c7ba0b0601fcb0d936d53f0365040dd6))
+* implement comprehensive Git hooks for code quality and testing ([bf2a65f](https://github.com/emadbaqeri/dcon/commit/bf2a65f0de3b3b40853e3fbd34db35ac4ee06ea2))
+
+### 🐛 Bug Fixes
+
+* prevent Cargo.toml corruption during semantic-release version updates ([1d3e03d](https://github.com/emadbaqeri/dcon/commit/1d3e03d3937998e8807e467ea97dcf833137dd18))
+* resolve semantic-release dependencies and module not found errors ([c4abdd3](https://github.com/emadbaqeri/dcon/commit/c4abdd3474cfe6f5a2bfd51542285111bfc22251))
+* resolve semantic-release npm dependencies and enable GitHub Actions caching ([1a675f9](https://github.com/emadbaqeri/dcon/commit/1a675f9f1dc632b4dc6eb05f9add35af62e849c3))
+* update GitHub Actions to use SEMANTIC_RELEASE_TOKEN for proper permissions ([6845850](https://github.com/emadbaqeri/dcon/commit/6845850f24bf21e825b0f8520ae98a1a55e5fbec))
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
