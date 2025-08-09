@@ -1,3 +1,9 @@
+## [2.0.3](https://github.com/emadbaqeri/dcon/compare/v2.0.2...v2.0.3) (2025-08-09)
+
+### 🐛 Bug Fixes
+
+* **ci:** use target-specific strip commands for cross-compiled binaries ([2f2a074](https://github.com/emadbaqeri/dcon/commit/2f2a07403dacfe4177f6b470fc94978af6875f74))
+
 ## [2.0.2](https://github.com/emadbaqeri/dcon/compare/v2.0.1...v2.0.2) (2025-08-09)
 
 ### 🐛 Bug Fixes
