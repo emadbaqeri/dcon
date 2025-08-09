@@ -1,0 +1,22 @@
+[package]
+name = "dcon"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+tokio-postgres = { version = "^0.7", features = ["with-chrono-0_4"] }
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+clap = { version = "4.0", features = ["derive"] }
+colored = "2.0"
+tabled = "0.14"
+uuid = { version = "1.4", features = ["v4", "serde"] }
+
+anyhow = "1.0"     # Better error handling
+thiserror = "1.0"  # Custom error types
+dialoguer = "0.10" # Interactive prompts
+indicatif = "0.17" # Progress bars and spinners
+url = "2.4"        # URL parsing for connection strings
+regex = "1.9"      # Pattern matching
