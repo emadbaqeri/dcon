@@ -77,7 +77,7 @@ jobs:
         if: matrix.target == 'aarch64-unknown-linux-gnu'
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu
+          sudo apt-get install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
 
       - name: Configure cross-compilation (Linux ARM64)
         if: matrix.target == 'aarch64-unknown-linux-gnu'
@@ -118,7 +118,25 @@ jobs:
         shell: bash
         run: |
           echo "Stripping binary for ${{ matrix.target }}"
-          strip target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+          BINARY_PATH="target/${{ matrix.target }}/release/${{ matrix.artifact_name }}"
+
+          case "${{ matrix.target }}" in
+            aarch64-unknown-linux-gnu)
+              if command -v aarch64-linux-gnu-strip >/dev/null 2>&1; then
+                echo "Using aarch64-linux-gnu-strip for cross-compiled binary"
+                aarch64-linux-gnu-strip "$BINARY_PATH"
+              else
+                echo "Warning: aarch64-linux-gnu-strip not found, skipping strip for cross-compiled binary"
+              fi
+              ;;
+            x86_64-unknown-linux-gnu|x86_64-apple-darwin|aarch64-apple-darwin)
+              echo "Using native strip command"
+              strip "$BINARY_PATH"
+              ;;
+            *)
+              echo "Unknown target ${{ matrix.target }}, skipping strip"
+              ;;
+          esac
 
       - name: Prepare release asset
         shell: bash
