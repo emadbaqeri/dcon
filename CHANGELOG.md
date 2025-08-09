@@ -1,3 +1,13 @@
+## [2.0.0](https://github.com/emadbaqeri/dcon/compare/v1.0.0...v2.0.0) (2025-08-09)
+
+### ⚠ BREAKING CHANGES
+
+* Installation process now uses pre-built binaries instead of requiring Rust toolchain. Users can now install with a single command without needing to build from source.
+
+### 🚀 Features
+
+* add comprehensive cross-platform installation system ([99a5a8d](https://github.com/emadbaqeri/dcon/commit/99a5a8d9306f9305bac8a599bf208a1ed59e7e82))
+
 ## 1.0.0 (2025-08-09)
 
 ### ⚠ BREAKING CHANGES
