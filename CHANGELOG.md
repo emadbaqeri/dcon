@@ -1,3 +1,9 @@
+## [2.0.2](https://github.com/emadbaqeri/dcon/compare/v2.0.1...v2.0.2) (2025-08-09)
+
+### 🐛 Bug Fixes
+
+* **ci:** simplify semantic-release configuration and clean up version update script ([e578140](https://github.com/emadbaqeri/dcon/commit/e578140f89a203c9061f6992825b309f7f39c797))
+
 ## [2.0.1](https://github.com/emadbaqeri/dcon/compare/v2.0.0...v2.0.1) (2025-08-09)
 
 ### 🐛 Bug Fixes
