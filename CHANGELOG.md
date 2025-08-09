@@ -1,3 +1,9 @@
+## [2.0.1](https://github.com/emadbaqeri/dcon/compare/v2.0.0...v2.0.1) (2025-08-09)
+
+### 🐛 Bug Fixes
+
+* **ci:** add explicit bash shell to workflow steps to prevent PowerShell parsing errors ([c4972f9](https://github.com/emadbaqeri/dcon/commit/c4972f9dd9ec21dd2e3b8e2f71489ae0e8120503))
+
 ## [2.0.0](https://github.com/emadbaqeri/dcon/compare/v1.0.0...v2.0.0) (2025-08-09)
 
 ### ⚠ BREAKING CHANGES
