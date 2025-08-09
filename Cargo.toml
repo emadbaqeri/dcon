@@ -26,6 +26,6 @@ uuid = { version = "1.4", features = ["v4", "serde"] }
 anyhow = "1.0"     # Better error handling
 thiserror = "1.0"  # Custom error types
 dialoguer = "0.10" # Interactive prompts
-indicatif = "0.17" # Progress bars and spinners
+indicatif = "0.18" # Progress bars and spinners
 url = "2.4"        # URL parsing for connection strings
 regex = "1.9"      # Pattern matching
