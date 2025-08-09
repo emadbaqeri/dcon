@@ -1,5 +1,5 @@
+use crate::cli::{CrudCommands, DatabaseCommands, OutputFormat, TableCommands};
 use crate::db::client::PostgresClient;
-use crate::cli::{OutputFormat, DatabaseCommands, TableCommands, CrudCommands};
 use colored::*;
 use serde_json::Value;
 use std::error::Error;

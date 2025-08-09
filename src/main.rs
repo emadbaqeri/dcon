@@ -13,11 +13,11 @@ use models::connection::ConnectionConfig;
 
 use crate::{
     cli::{
-        CrudCommands, TableCommands,
         commands::{
             execute_connect, execute_crud_command, execute_database_command,
             execute_interactive_mode, execute_query, execute_table_command,
         },
+        CrudCommands, TableCommands,
     },
     db::client::PostgresClient,
 };

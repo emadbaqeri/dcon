@@ -1,0 +1,204 @@
+#!/bin/bash
+
+# dcon Pre-push Hook
+# This hook runs comprehensive testing before allowing pushes
+# 
+# Checks performed:
+# - Full test suite with cargo test
+# - Documentation tests with cargo test --doc
+# - Ensures all tests pass before allowing push
+#
+# To bypass this hook in emergency situations, use: git push --no-verify
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_status() {
+    echo -e "${BLUE}[dcon pre-push]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[dcon pre-push]${NC} ✅ $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[dcon pre-push]${NC} ⚠️  $1"
+}
+
+print_error() {
+    echo -e "${RED}[dcon pre-push]${NC} ❌ $1"
+}
+
+# Function to check if we're in a Rust project
+check_rust_project() {
+    if [ ! -f "Cargo.toml" ]; then
+        print_error "Cargo.toml not found. This hook is designed for Rust projects."
+        exit 1
+    fi
+}
+
+# Function to check if cargo is available
+check_cargo() {
+    if ! command -v cargo &> /dev/null; then
+        print_error "cargo command not found. Please install Rust and Cargo."
+        exit 1
+    fi
+}
+
+# Function to run the full test suite
+run_tests() {
+    print_status "Running full test suite with cargo test..."
+
+    # Run tests with timeout and detailed output (if timeout available)
+    if command -v timeout &> /dev/null; then
+        timeout_cmd="timeout 300s"
+    else
+        timeout_cmd=""
+    fi
+
+    if ! $timeout_cmd cargo test --all-features --verbose; then
+        print_error "Test suite failed!"
+        print_warning "Fix the failing tests above before pushing."
+        print_warning "To run tests locally: cargo test --all-features"
+        print_warning "To run a specific test: cargo test test_name"
+        return 1
+    fi
+
+    print_success "All tests passed"
+    return 0
+}
+
+# Function to run documentation tests
+run_doc_tests() {
+    print_status "Running documentation tests with cargo test --doc..."
+
+    # Run doc tests with timeout (if available)
+    if command -v timeout &> /dev/null; then
+        timeout_cmd="timeout 120s"
+    else
+        timeout_cmd=""
+    fi
+
+    if ! $timeout_cmd cargo test --doc --verbose; then
+        print_error "Documentation tests failed!"
+        print_warning "Fix the failing documentation tests above before pushing."
+        print_warning "Documentation tests verify code examples in /// comments"
+        print_warning "Make sure all code examples in docs are valid and up-to-date"
+        return 1
+    fi
+
+    print_success "Documentation tests passed"
+    return 0
+}
+
+# Function to run a quick compilation check
+quick_compile_check() {
+    print_status "Running quick compilation check..."
+    
+    if ! cargo check --all-targets --all-features; then
+        print_error "Compilation check failed!"
+        print_warning "Fix the compilation errors above before pushing."
+        return 1
+    fi
+    
+    print_success "Compilation check passed"
+    return 0
+}
+
+# Function to run benchmark tests if they exist
+run_bench_tests() {
+    # Check if there are any benchmark tests
+    if find . -name "*.rs" -path "./benches/*" -o -name "*.rs" -exec grep -l "#\[bench\]" {} \; 2>/dev/null | grep -q .; then
+        print_status "Found benchmark tests, running cargo bench --no-run..."
+
+        if command -v timeout &> /dev/null; then
+            timeout_cmd="timeout 60s"
+        else
+            timeout_cmd=""
+        fi
+
+        if ! $timeout_cmd cargo bench --no-run; then
+            print_warning "Benchmark compilation failed, but continuing..."
+            return 0  # Don't fail the push for benchmark issues
+        fi
+
+        print_success "Benchmark tests compiled successfully"
+    fi
+    return 0
+}
+
+# Function to check for uncommitted changes
+check_uncommitted_changes() {
+    if ! git diff-index --quiet HEAD --; then
+        print_warning "You have uncommitted changes. Consider committing them before pushing."
+        print_status "Continuing with push..."
+    fi
+}
+
+# Main execution
+main() {
+    print_status "Starting pre-push checks for dcon..."
+    
+    # Get the remote and URL from command line arguments
+    remote="$1"
+    url="$2"
+    
+    print_status "Pushing to remote: $remote ($url)"
+    
+    # Preliminary checks
+    check_rust_project
+    check_cargo
+    check_uncommitted_changes
+    
+    # Track if any checks failed
+    failed=0
+    
+    # Run all checks
+    if ! quick_compile_check; then
+        failed=1
+    fi
+    
+    if ! run_tests; then
+        failed=1
+    fi
+    
+    if ! run_doc_tests; then
+        failed=1
+    fi
+
+    # Run benchmark tests (non-blocking)
+    run_bench_tests
+
+    # Run additional quality checks before push
+    if [ -f ".git/hooks/quality-checks.sh" ]; then
+        print_status "Running additional quality checks..."
+        source .git/hooks/quality-checks.sh
+        # Run TODO/FIXME check (warning for main branch)
+        check_todo_fixme
+        # Run security audit (warning only)
+        check_security_audit
+    fi
+    
+    # Final result
+    if [ $failed -eq 1 ]; then
+        print_error "Pre-push checks failed! Push aborted."
+        echo ""
+        print_warning "To bypass these checks in emergency situations, use:"
+        echo "  git push --no-verify"
+        echo ""
+        exit 1
+    fi
+    
+    print_success "All pre-push checks passed! 🚀"
+    exit 0
+}
+
+# Run main function
+main "$@"

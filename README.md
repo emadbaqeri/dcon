@@ -193,6 +193,10 @@ src/
 git clone https://github.com/emadbaqeri/dcon.git
 cd dcon
 
+# Set up Git hooks for code quality (recommended for contributors)
+./scripts/install-git-hooks.sh install
+./scripts/setup-git-hooks.sh
+
 # Run tests
 cargo test
 
@@ -217,6 +221,56 @@ The project includes a comprehensive database setup script:
 # This creates two databases:
 # - food_delivery_db (restaurant/delivery app data)
 # - school_management_db (educational institution data)
+```
+
+### Git Hooks for Code Quality
+
+This project includes comprehensive Git hooks to maintain code quality and ensure all contributions meet our standards.
+
+#### Automatic Setup (Recommended)
+
+```bash
+# After cloning the repository, run:
+./scripts/install-git-hooks.sh install
+./scripts/setup-git-hooks.sh
+```
+
+#### What the Hooks Do
+
+**Pre-commit Hook:**
+- ✅ Code formatting check (`cargo fmt --check`)
+- ✅ Linting with strict Clippy rules (`cargo clippy`)
+- ✅ Compilation check (`cargo check`)
+- ✅ Semantic versioning validation
+- ✅ Documentation coverage check
+
+**Pre-push Hook:**
+- 🧪 Full test suite (`cargo test`)
+- 📚 Documentation tests (`cargo test --doc`)
+- 🏃 Benchmark compilation check
+- 🔍 TODO/FIXME detection (main branch)
+- 🔒 Security audit (if `cargo-audit` installed)
+
+#### Emergency Bypass
+
+In emergency situations, you can bypass the hooks:
+
+```bash
+git commit --no-verify    # Skip pre-commit checks
+git push --no-verify      # Skip pre-push checks
+```
+
+#### Manual Hook Testing
+
+```bash
+# Test pre-commit hook
+.git/hooks/pre-commit
+
+# Test pre-push hook
+.git/hooks/pre-push origin main
+
+# Run quality checks
+.git/hooks/quality-checks.sh
 ```
 
 ## 📚 Commands Reference

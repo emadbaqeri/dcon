@@ -31,7 +31,7 @@ impl PostgresClient {
         println!("{}", "✅ Connected successfully!".green());
 
         Ok(PostgresClient {
-            client: client,
+            client,
             config: config.clone(),
         })
     }

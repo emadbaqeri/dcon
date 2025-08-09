@@ -29,7 +29,13 @@ Thank you for your interest in contributing to dcon! This document provides guid
    cargo build
    ```
 
-5. Run tests:
+5. **Set up Git hooks (Important!)**:
+   ```bash
+   ./scripts/install-git-hooks.sh install
+   ./scripts/setup-git-hooks.sh
+   ```
+
+6. Run tests:
    ```bash
    cargo test
    ```
@@ -89,11 +95,15 @@ git config commit.template .gitmessage
 
 2. **Make your changes** following the coding standards
 
-3. **Test your changes**:
+3. **Test your changes** (Git hooks will run automatically, but you can test manually):
    ```bash
    cargo test
    cargo clippy
    cargo fmt
+
+   # Test Git hooks manually
+   .git/hooks/pre-commit
+   .git/hooks/pre-push origin main
    ```
 
 4. **Commit your changes** using conventional commits:
@@ -157,6 +167,76 @@ cargo clippy -- -D warnings
 - Include tests for new functionality
 - Keep functions focused and small
 - Use meaningful variable and function names
+
+## 🪝 Git Hooks
+
+This project uses Git hooks to maintain code quality automatically. The hooks are designed to catch issues early and ensure consistent code standards.
+
+### Automatic Setup
+
+After cloning the repository, set up the Git hooks:
+
+```bash
+./scripts/install-git-hooks.sh install
+./scripts/setup-git-hooks.sh
+```
+
+### Hook Details
+
+#### Pre-commit Hook
+Runs before each commit and checks:
+- **Code formatting**: `cargo fmt --check`
+- **Linting**: `cargo clippy` with strict settings
+- **Compilation**: `cargo check --all-targets --all-features`
+- **Semantic versioning**: Validates version format in Cargo.toml
+- **Documentation coverage**: Warns about missing docs
+
+#### Pre-push Hook
+Runs before each push and performs:
+- **Full test suite**: `cargo test --all-features`
+- **Documentation tests**: `cargo test --doc`
+- **Benchmark compilation**: Ensures benchmarks compile
+- **TODO/FIXME check**: Warns about TODO comments in main branch
+- **Security audit**: Runs `cargo audit` if available
+
+### Bypassing Hooks
+
+In emergency situations, you can bypass the hooks:
+
+```bash
+# Skip pre-commit checks
+git commit --no-verify
+
+# Skip pre-push checks
+git push --no-verify
+```
+
+**Note**: Use `--no-verify` sparingly and only in genuine emergencies. The hooks are there to maintain code quality.
+
+### Manual Testing
+
+You can run the hooks manually to test your changes:
+
+```bash
+# Test pre-commit hook
+.git/hooks/pre-commit
+
+# Test pre-push hook
+.git/hooks/pre-push origin main
+
+# Run additional quality checks
+.git/hooks/quality-checks.sh
+```
+
+### Troubleshooting Hooks
+
+If hooks fail, common solutions include:
+
+1. **Formatting issues**: Run `cargo fmt`
+2. **Clippy warnings**: Fix the warnings shown in the output
+3. **Compilation errors**: Fix the errors shown by `cargo check`
+4. **Test failures**: Fix failing tests with `cargo test`
+5. **Missing tools**: Install with `rustup component add clippy rustfmt`
 
 ## 🐛 Reporting Issues
 
