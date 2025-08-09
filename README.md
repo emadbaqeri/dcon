@@ -23,6 +23,28 @@ A powerful, modern PostgreSQL command-line interface tool built in Rust. **dcon*
 
 ### Installation
 
+#### 🚀 Quick Install (Recommended)
+
+**macOS & Linux:**
+```bash
+curl -sSL https://raw.githubusercontent.com/emadbaqeri/dcon/main/scripts/install-oneliner.sh | bash
+```
+
+**Windows (PowerShell):**
+```powershell
+iwr -useb https://raw.githubusercontent.com/emadbaqeri/dcon/main/scripts/install.ps1 | iex
+```
+
+#### 📦 Pre-built Binaries
+
+Download the latest pre-built binaries from [GitHub Releases](https://github.com/emadbaqeri/dcon/releases/tag/v1.0.0):
+
+- **macOS**: `dcon-x86_64-apple-darwin` (Intel) or `dcon-aarch64-apple-darwin` (Apple Silicon)
+- **Linux**: `dcon-x86_64-unknown-linux-gnu` (x86_64) or `dcon-aarch64-unknown-linux-gnu` (ARM64)
+- **Windows**: `dcon-x86_64-pc-windows-msvc.exe` (x86_64) or `dcon-aarch64-pc-windows-msvc.exe` (ARM64)
+
+#### 🔧 Build from Source
+
 ```bash
 # Clone the repository
 git clone https://github.com/emadbaqeri/dcon.git
@@ -34,6 +56,8 @@ cargo build --release
 # Install globally (optional)
 cargo install --path .
 ```
+
+For detailed installation instructions, see [INSTALL.md](INSTALL.md).
 
 ### Basic Usage
 
