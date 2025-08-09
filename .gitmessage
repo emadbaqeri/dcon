@@ -1,0 +1,33 @@
+# <type>[optional scope]: <description>
+#
+# [optional body]
+#
+# [optional footer(s)]
+#
+# --- COMMIT END ---
+# Type can be:
+#   feat     (new feature)
+#   fix      (bug fix)
+#   docs     (changes to documentation)
+#   style    (formatting, missing semi colons, etc; no code change)
+#   refactor (refactoring production code)
+#   test     (adding missing tests, refactoring tests; no production code change)
+#   chore    (updating grunt tasks etc; no production code change)
+#   perf     (performance improvements)
+#   ci       (changes to CI configuration)
+#   build    (changes to build system)
+#   revert   (reverts a previous commit)
+#
+# Examples:
+#   feat: add new database connection pooling
+#   fix: resolve memory leak in query execution
+#   docs: update installation instructions
+#   feat!: change CLI argument structure (breaking change)
+#   fix(auth): handle expired tokens correctly
+#
+# Remember:
+#   - Use the imperative mood in the subject line
+#   - Do not end the subject line with a period
+#   - Capitalize the subject line
+#   - Use the body to explain what and why vs. how
+#   - Can use multiple lines with "-" for bullet points in body
