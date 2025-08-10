@@ -14,25 +14,25 @@ NC='\033[0m' # No Color
 
 # Configuration
 REPO="emadbaqeri/dcon"
-VERSION="v1.0.0"
+VERSION=""  # Will be set dynamically
 INSTALL_DIR="$HOME/.local/bin"
 BINARY_NAME="dcon"
 
 # Function to print colored output
 print_status() {
-    echo -e "${BLUE}[INFO]${NC} $1"
+    echo -e "${BLUE}[INFO]${NC} $1" >&2
 }
 
 print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
+    echo -e "${GREEN}[SUCCESS]${NC} $1" >&2
 }
 
 print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
+    echo -e "${YELLOW}[WARNING]${NC} $1" >&2
 }
 
 print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+    echo -e "${RED}[ERROR]${NC} $1" >&2
 }
 
 # Function to detect OS and architecture
@@ -79,28 +79,65 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-# Function to download the binary
-download_binary() {
-    local download_url="https://github.com/${REPO}/releases/download/${VERSION}/${BINARY_FILE}"
-    local temp_file="/tmp/${BINARY_FILE}"
-    
-    print_status "Downloading dcon ${VERSION} for ${OS} ${ARCH}..."
-    print_status "Download URL: ${download_url}"
-    
+# Function to get the latest release version
+get_latest_version() {
+    print_status "Fetching latest release version..."
+
     if command_exists curl; then
-        curl -L -o "$temp_file" "$download_url"
+        VERSION=$(curl -s "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
     elif command_exists wget; then
-        wget -O "$temp_file" "$download_url"
+        VERSION=$(wget -qO- "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
     else
         print_error "Neither curl nor wget is available. Please install one of them."
         exit 1
     fi
-    
-    if [ ! -f "$temp_file" ]; then
-        print_error "Failed to download the binary"
+
+    if [ -z "$VERSION" ]; then
+        print_error "Failed to fetch the latest version"
         exit 1
     fi
-    
+
+    print_status "Latest version: ${VERSION}"
+}
+
+# Function to download the binary
+download_binary() {
+    local download_url="https://github.com/${REPO}/releases/download/${VERSION}/${BINARY_FILE}"
+    local temp_file="/tmp/${BINARY_FILE}"
+
+    print_status "Downloading dcon ${VERSION} for ${OS} ${ARCH}..."
+    print_status "Download URL: ${download_url}"
+
+    if command_exists curl; then
+        if ! curl -L -o "$temp_file" "$download_url"; then
+            print_error "Failed to download the binary from ${download_url}"
+            exit 1
+        fi
+    elif command_exists wget; then
+        if ! wget -O "$temp_file" "$download_url"; then
+            print_error "Failed to download the binary from ${download_url}"
+            exit 1
+        fi
+    else
+        print_error "Neither curl nor wget is available. Please install one of them."
+        exit 1
+    fi
+
+    if [ ! -f "$temp_file" ]; then
+        print_error "Failed to download the binary - file does not exist"
+        exit 1
+    fi
+
+    # Check if the downloaded file is actually a binary (not an error page)
+    local file_size=$(wc -c < "$temp_file")
+    if [ "$file_size" -lt 1000 ]; then
+        print_error "Downloaded file is too small (${file_size} bytes) - likely an error page"
+        print_error "Please check if the release exists: https://github.com/${REPO}/releases/tag/${VERSION}"
+        rm -f "$temp_file"
+        exit 1
+    fi
+
+    print_status "Successfully downloaded binary (${file_size} bytes)"
     echo "$temp_file"
 }
 
@@ -172,23 +209,28 @@ verify_installation() {
 # Main installation process
 main() {
     print_status "Starting dcon installation..."
-    
+
     # Detect platform
     detect_platform
     print_status "Detected platform: ${OS} ${ARCH}"
-    
+
+    # Get latest version if not specified
+    if [ -z "$VERSION" ]; then
+        get_latest_version
+    fi
+
     # Download binary
     temp_file=$(download_binary)
-    
+
     # Install binary
     install_binary "$temp_file"
-    
+
     # Update PATH
     update_path
-    
+
     # Verify installation
     verify_installation
-    
+
     print_success "dcon installation completed!"
     echo ""
     print_status "🎉 Welcome to dcon - PostgreSQL CLI Tool!"
@@ -207,7 +249,7 @@ case "${1:-}" in
         echo ""
         echo "Options:"
         echo "  --help, -h     Show this help message"
-        echo "  --version, -v  Install specific version (default: $VERSION)"
+        echo "  --version, -v  Install specific version (default: latest)"
         echo "  --dir DIR      Install to specific directory (default: $INSTALL_DIR)"
         echo ""
         echo "Environment Variables:"
@@ -219,6 +261,7 @@ case "${1:-}" in
         if [ -n "$2" ]; then
             VERSION="$2"
             print_status "Installing version: $VERSION"
+            shift 2
         else
             print_error "Version argument required"
             exit 1
@@ -228,6 +271,7 @@ case "${1:-}" in
         if [ -n "$2" ]; then
             INSTALL_DIR="$2"
             print_status "Installing to: $INSTALL_DIR"
+            shift 2
         else
             print_error "Directory argument required"
             exit 1

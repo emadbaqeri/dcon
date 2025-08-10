@@ -23,9 +23,9 @@ use crate::{
 };
 
 #[derive(Parser)]
-#[command(name = "pgres_cli")]
+#[command(name = "dcon")]
 #[command(about = "A PostgreSQL CLI Tool for Database Operations")]
-#[command(version = "0.0.1")]
+#[command(version = env!("CARGO_PKG_VERSION"))]
 pub struct Cli {
     /// Database Host
     #[arg(short = 'H', long, default_value = "localhost")]

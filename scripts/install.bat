@@ -6,7 +6,7 @@ REM This script downloads and installs the latest version of dcon
 
 REM Configuration
 set "REPO=emadbaqeri/dcon"
-set "VERSION=v1.0.0"
+set "VERSION="
 set "BINARY_NAME=dcon.exe"
 set "INSTALL_DIR=%USERPROFILE%\.local\bin"
 
@@ -22,6 +22,19 @@ set "WARNING=[WARNING]"
 set "ERROR=[ERROR]"
 
 echo %INFO% Starting dcon installation...
+
+REM Get latest version if not specified
+if "%VERSION%"=="" (
+    echo %INFO% Fetching latest release version...
+    for /f "tokens=2 delims=:" %%a in ('powershell -Command "& {(Invoke-RestMethod -Uri 'https://api.github.com/repos/%REPO%/releases/latest').tag_name}"') do (
+        set "VERSION=%%a"
+    )
+    if "!VERSION!"=="" (
+        echo %ERROR% Failed to fetch the latest version
+        exit /b 1
+    )
+    echo %INFO% Latest version: !VERSION!
+)
 
 REM Detect architecture
 set "ARCH=x86_64"

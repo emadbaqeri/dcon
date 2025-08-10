@@ -2,7 +2,7 @@
 # This script downloads and installs the latest version of dcon
 
 param(
-    [string]$Version = "v1.0.0",
+    [string]$Version = "",
     [string]$InstallDir = "$env:USERPROFILE\.local\bin",
     [switch]$Help
 )
@@ -39,7 +39,7 @@ function Show-Help {
     Write-Host "Usage: .\install.ps1 [OPTIONS]"
     Write-Host ""
     Write-Host "Options:"
-    Write-Host "  -Version VERSION   Install specific version (default: $Version)"
+    Write-Host "  -Version VERSION   Install specific version (default: latest)"
     Write-Host "  -InstallDir DIR    Install to specific directory (default: $InstallDir)"
     Write-Host "  -Help              Show this help message"
     Write-Host ""
@@ -48,9 +48,31 @@ function Show-Help {
     Write-Host ""
     Write-Host "Examples:"
     Write-Host "  .\install.ps1                           # Install latest version"
-    Write-Host "  .\install.ps1 -Version v1.0.0          # Install specific version"
+    Write-Host "  .\install.ps1 -Version v2.0.3          # Install specific version"
     Write-Host "  .\install.ps1 -InstallDir C:\tools     # Install to custom directory"
     exit 0
+}
+
+# Function to get the latest release version
+function Get-LatestVersion {
+    Write-Status "Fetching latest release version..."
+
+    try {
+        $ApiUrl = "https://api.github.com/repos/$Repo/releases/latest"
+        $Response = Invoke-RestMethod -Uri $ApiUrl -UseBasicParsing
+        $LatestVersion = $Response.tag_name
+
+        if (-not $LatestVersion) {
+            throw "Failed to fetch the latest version"
+        }
+
+        Write-Status "Latest version: $LatestVersion"
+        return $LatestVersion
+    }
+    catch {
+        Write-Error "Failed to fetch the latest version: $($_.Exception.Message)"
+        exit 1
+    }
 }
 
 # Function to detect architecture
@@ -69,24 +91,34 @@ function Get-Architecture {
 # Function to download the binary
 function Download-Binary {
     param([string]$Arch)
-    
+
     $BinaryFile = "dcon-$Arch-pc-windows-msvc.exe"
     $DownloadUrl = "https://github.com/$Repo/releases/download/$Version/$BinaryFile"
     $TempFile = "$env:TEMP\$BinaryFile"
-    
+
     Write-Status "Downloading dcon $Version for Windows $Arch..."
     Write-Status "Download URL: $DownloadUrl"
-    
+
     try {
         # Use Invoke-WebRequest to download
         $ProgressPreference = 'SilentlyContinue'  # Disable progress bar for faster download
         Invoke-WebRequest -Uri $DownloadUrl -OutFile $TempFile -UseBasicParsing
         $ProgressPreference = 'Continue'  # Re-enable progress bar
-        
+
         if (-not (Test-Path $TempFile)) {
             throw "Download failed - file not found"
         }
-        
+
+        # Check if the downloaded file is actually a binary (not an error page)
+        $FileSize = (Get-Item $TempFile).Length
+        if ($FileSize -lt 1000) {
+            Write-Error "Downloaded file is too small ($FileSize bytes) - likely an error page"
+            Write-Error "Please check if the release exists: https://github.com/$Repo/releases/tag/$Version"
+            Remove-Item $TempFile -Force -ErrorAction SilentlyContinue
+            exit 1
+        }
+
+        Write-Status "Successfully downloaded binary ($FileSize bytes)"
         return $TempFile
     }
     catch {
@@ -183,11 +215,16 @@ function Main {
     }
     
     Write-Status "Starting dcon installation..."
-    
+
+    # Get latest version if not specified
+    if (-not $Version) {
+        $Version = Get-LatestVersion
+    }
+
     # Detect architecture
     $arch = Get-Architecture
     Write-Status "Detected architecture: $arch"
-    
+
     # Download binary
     $tempFile = Download-Binary -Arch $arch
     
