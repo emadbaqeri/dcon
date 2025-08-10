@@ -158,32 +158,187 @@ install_binary() {
     print_success "dcon installed successfully to $INSTALL_DIR/$BINARY_NAME"
 }
 
+# Function to detect the user's current shell
+detect_shell() {
+    local detected_shell=""
+    local shell_name=""
+
+    # Method 1: Check environment variables (most reliable when available)
+    if [ -n "$ZSH_VERSION" ]; then
+        detected_shell="zsh"
+        print_status "Shell detected via ZSH_VERSION: zsh"
+    elif [ -n "$BASH_VERSION" ]; then
+        detected_shell="bash"
+        print_status "Shell detected via BASH_VERSION: bash"
+    elif [ -n "$FISH_VERSION" ]; then
+        detected_shell="fish"
+        print_status "Shell detected via FISH_VERSION: fish"
+    fi
+
+    # Method 2: Check $SHELL environment variable
+    if [ -z "$detected_shell" ] && [ -n "$SHELL" ]; then
+        shell_name=$(basename "$SHELL")
+        case "$shell_name" in
+            zsh)
+                detected_shell="zsh"
+                print_status "Shell detected via \$SHELL: zsh ($SHELL)"
+                ;;
+            bash)
+                detected_shell="bash"
+                print_status "Shell detected via \$SHELL: bash ($SHELL)"
+                ;;
+            fish)
+                detected_shell="fish"
+                print_status "Shell detected via \$SHELL: fish ($SHELL)"
+                ;;
+            dash|sh)
+                detected_shell="dash"
+                print_status "Shell detected via \$SHELL: dash/sh ($SHELL)"
+                ;;
+            *)
+                print_status "Unknown shell detected via \$SHELL: $shell_name ($SHELL)"
+                ;;
+        esac
+    fi
+
+    # Method 3: Check parent process (fallback method)
+    if [ -z "$detected_shell" ]; then
+        if command_exists ps; then
+            local parent_cmd
+            parent_cmd=$(ps -p $$ -o comm= 2>/dev/null | tr -d ' ')
+            if [ -n "$parent_cmd" ]; then
+                case "$parent_cmd" in
+                    zsh)
+                        detected_shell="zsh"
+                        print_status "Shell detected via parent process: zsh"
+                        ;;
+                    bash)
+                        detected_shell="bash"
+                        print_status "Shell detected via parent process: bash"
+                        ;;
+                    fish)
+                        detected_shell="fish"
+                        print_status "Shell detected via parent process: fish"
+                        ;;
+                    dash|sh)
+                        detected_shell="dash"
+                        print_status "Shell detected via parent process: dash/sh"
+                        ;;
+                esac
+            fi
+        fi
+    fi
+
+    # Method 4: Final fallback - check what shells are available
+    if [ -z "$detected_shell" ]; then
+        print_warning "Could not detect shell automatically, using fallback detection"
+        if command_exists zsh && [ -f "$HOME/.zshrc" ]; then
+            detected_shell="zsh"
+            print_status "Fallback: Found zsh and ~/.zshrc, assuming zsh"
+        elif command_exists bash; then
+            detected_shell="bash"
+            print_status "Fallback: Found bash, assuming bash"
+        else
+            detected_shell="unknown"
+            print_warning "Fallback: Could not determine shell, will try multiple config files"
+        fi
+    fi
+
+    echo "$detected_shell"
+}
+
+# Function to get shell configuration file path
+get_shell_config_file() {
+    local shell_type="$1"
+    local config_file=""
+
+    case "$shell_type" in
+        zsh)
+            config_file="$HOME/.zshrc"
+            ;;
+        bash)
+            # Prefer .bash_profile on macOS, .bashrc on Linux
+            if [ "$OS" = "macos" ] && [ -f "$HOME/.bash_profile" ]; then
+                config_file="$HOME/.bash_profile"
+            elif [ -f "$HOME/.bashrc" ]; then
+                config_file="$HOME/.bashrc"
+            elif [ -f "$HOME/.bash_profile" ]; then
+                config_file="$HOME/.bash_profile"
+            else
+                # Create .bashrc if neither exists
+                config_file="$HOME/.bashrc"
+            fi
+            ;;
+        fish)
+            config_file="$HOME/.config/fish/config.fish"
+            # Create fish config directory if it doesn't exist
+            mkdir -p "$(dirname "$config_file")"
+            ;;
+        dash)
+            # dash typically uses .profile
+            config_file="$HOME/.profile"
+            ;;
+        *)
+            # Unknown shell - try common files in order of preference
+            if [ -f "$HOME/.zshrc" ]; then
+                config_file="$HOME/.zshrc"
+                print_status "Unknown shell: using existing ~/.zshrc"
+            elif [ -f "$HOME/.bashrc" ]; then
+                config_file="$HOME/.bashrc"
+                print_status "Unknown shell: using existing ~/.bashrc"
+            elif [ -f "$HOME/.bash_profile" ]; then
+                config_file="$HOME/.bash_profile"
+                print_status "Unknown shell: using existing ~/.bash_profile"
+            else
+                # Default to .bashrc for unknown shells
+                config_file="$HOME/.bashrc"
+                print_status "Unknown shell: defaulting to ~/.bashrc"
+            fi
+            ;;
+    esac
+
+    echo "$config_file"
+}
+
 # Function to update PATH and make command immediately available
 update_path() {
-    local shell_profile=""
+    local shell_type
+    local shell_profile
     local path_updated=false
 
-    # Detect shell and set appropriate profile file
-    if [ -n "$ZSH_VERSION" ]; then
-        shell_profile="$HOME/.zshrc"
-    elif [ -n "$BASH_VERSION" ]; then
-        if [ -f "$HOME/.bash_profile" ]; then
-            shell_profile="$HOME/.bash_profile"
-        else
-            shell_profile="$HOME/.bashrc"
-        fi
-    elif [ "$SHELL" = "/bin/zsh" ] || [ "$SHELL" = "/usr/bin/zsh" ]; then
-        shell_profile="$HOME/.zshrc"
-    else
-        shell_profile="$HOME/.bashrc"
-    fi
+    # Detect the user's shell
+    shell_type=$(detect_shell)
+
+    # Get the appropriate configuration file
+    shell_profile=$(get_shell_config_file "$shell_type")
+
+    print_status "Detected shell: $shell_type"
+    print_status "Configuration file: $shell_profile"
 
     # Check if the install directory is already in PATH
     if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
         print_status "Adding $INSTALL_DIR to PATH in $shell_profile"
+
+        # Create the config file if it doesn't exist
+        if [ ! -f "$shell_profile" ]; then
+            touch "$shell_profile"
+            print_status "Created configuration file: $shell_profile"
+        fi
+
+        # Add PATH export based on shell type
         echo "" >> "$shell_profile"
         echo "# Added by dcon installer" >> "$shell_profile"
-        echo "export PATH=\"\$PATH:$INSTALL_DIR\"" >> "$shell_profile"
+
+        case "$shell_type" in
+            fish)
+                echo "set -gx PATH \$PATH $INSTALL_DIR" >> "$shell_profile"
+                print_status "Added fish-style PATH export to $shell_profile"
+                ;;
+            *)
+                echo "export PATH=\"\$PATH:$INSTALL_DIR\"" >> "$shell_profile"
+                print_status "Added POSIX-style PATH export to $shell_profile"
+                ;;
+        esac
 
         # Update PATH in current session
         export PATH="$PATH:$INSTALL_DIR"
@@ -200,44 +355,164 @@ update_path() {
         print_status "Command cache refreshed"
     fi
 
-    # For zsh, also try rehash if available
-    if [ -n "$ZSH_VERSION" ] && command -v rehash >/dev/null 2>&1; then
-        rehash 2>/dev/null || true
+    # Shell-specific cache refresh
+    case "$shell_type" in
+        zsh)
+            if command -v rehash >/dev/null 2>&1; then
+                rehash 2>/dev/null || true
+                print_status "Refreshed zsh command cache"
+            fi
+            ;;
+        fish)
+            # Fish automatically updates its command cache
+            print_status "Fish shell will automatically update command cache"
+            ;;
+    esac
+
+    # Provide user feedback about next steps
+    if [ "$path_updated" = true ]; then
+        echo ""
+        print_success "✓ Updated PATH in $shell_profile"
+        case "$shell_type" in
+            zsh)
+                print_status "💡 To use dcon in new terminal sessions, restart your terminal or run:"
+                print_status "   source ~/.zshrc"
+                ;;
+            bash)
+                print_status "💡 To use dcon in new terminal sessions, restart your terminal or run:"
+                if [[ "$shell_profile" == *".bash_profile"* ]]; then
+                    print_status "   source ~/.bash_profile"
+                else
+                    print_status "   source ~/.bashrc"
+                fi
+                ;;
+            fish)
+                print_status "💡 To use dcon in new terminal sessions, restart your terminal or run:"
+                print_status "   source ~/.config/fish/config.fish"
+                ;;
+            *)
+                print_status "💡 To use dcon in new terminal sessions, restart your terminal or run:"
+                print_status "   source $shell_profile"
+                ;;
+        esac
+        echo ""
     fi
+}
+
+# Function to provide manual installation instructions as fallback
+provide_manual_instructions() {
+    local shell_type="$1"
+    local shell_profile="$2"
+
+    echo ""
+    print_warning "⚠️  Automatic shell configuration may not have worked perfectly."
+    print_status "📋 Manual setup instructions:"
+    echo ""
+
+    case "$shell_type" in
+        zsh)
+            print_status "1. Add dcon to your PATH by running:"
+            print_status "   echo 'export PATH=\"\$PATH:$INSTALL_DIR\"' >> ~/.zshrc"
+            print_status "2. Reload your shell configuration:"
+            print_status "   source ~/.zshrc"
+            ;;
+        bash)
+            print_status "1. Add dcon to your PATH by running:"
+            if [[ "$shell_profile" == *".bash_profile"* ]]; then
+                print_status "   echo 'export PATH=\"\$PATH:$INSTALL_DIR\"' >> ~/.bash_profile"
+                print_status "2. Reload your shell configuration:"
+                print_status "   source ~/.bash_profile"
+            else
+                print_status "   echo 'export PATH=\"\$PATH:$INSTALL_DIR\"' >> ~/.bashrc"
+                print_status "2. Reload your shell configuration:"
+                print_status "   source ~/.bashrc"
+            fi
+            ;;
+        fish)
+            print_status "1. Add dcon to your PATH by running:"
+            print_status "   echo 'set -gx PATH \$PATH $INSTALL_DIR' >> ~/.config/fish/config.fish"
+            print_status "2. Reload your shell configuration:"
+            print_status "   source ~/.config/fish/config.fish"
+            ;;
+        *)
+            print_status "1. Add dcon to your PATH by adding this line to your shell's configuration file:"
+            print_status "   export PATH=\"\$PATH:$INSTALL_DIR\""
+            print_status "2. Common configuration files to try:"
+            print_status "   ~/.zshrc (for zsh), ~/.bashrc (for bash), ~/.profile (for dash/sh)"
+            print_status "3. Reload your shell configuration or restart your terminal"
+            ;;
+    esac
+
+    echo ""
+    print_status "3. Test the installation:"
+    print_status "   dcon --version"
+    echo ""
+    print_status "4. If you continue to have issues:"
+    print_status "   - Try restarting your terminal completely"
+    print_status "   - Check that $INSTALL_DIR is in your PATH: echo \$PATH"
+    print_status "   - Run the binary directly: $INSTALL_DIR/dcon --version"
+    echo ""
 }
 
 # Function to verify installation and test immediate availability
 verify_installation() {
+    local shell_type="$1"
+    local shell_profile="$2"
+
     if [ -x "$INSTALL_DIR/$BINARY_NAME" ]; then
         print_status "Verifying installation..."
 
         # Test that the binary works with full path
         if ! "$INSTALL_DIR/$BINARY_NAME" --version >/dev/null 2>&1; then
             print_error "Binary verification failed - dcon binary is not working correctly"
+            print_error "The downloaded binary may be corrupted or incompatible with your system"
+            print_error "Please check: $INSTALL_DIR/$BINARY_NAME"
             exit 1
         fi
 
+        local version_output
+        version_output=$("$INSTALL_DIR/$BINARY_NAME" --version 2>&1)
+        print_status "✓ Binary verification successful: $version_output"
+
         # Test that the command is available in current session
-        local max_attempts=3
+        local max_attempts=5
         local attempt=1
         local command_available=false
 
+        print_status "Testing command availability in current session..."
         while [ $attempt -le $max_attempts ]; do
             if command_exists "$BINARY_NAME"; then
-                print_status "Testing dcon command availability (attempt $attempt/$max_attempts)..."
+                print_status "Testing dcon command (attempt $attempt/$max_attempts)..."
                 if "$BINARY_NAME" --version >/dev/null 2>&1; then
                     command_available=true
                     break
                 fi
             fi
 
-            # If command not available, try refreshing hash again
+            # If command not available, try various refresh methods
             if [ $attempt -lt $max_attempts ]; then
-                print_status "Command not immediately available, refreshing cache..."
-                hash -r 2>/dev/null || true
-                if [ -n "$ZSH_VERSION" ] && command -v rehash >/dev/null 2>&1; then
-                    rehash 2>/dev/null || true
+                print_status "Command not immediately available, trying refresh methods..."
+
+                # Method 1: Standard hash refresh
+                if command -v hash >/dev/null 2>&1; then
+                    hash -r 2>/dev/null || true
                 fi
+
+                # Method 2: Shell-specific refresh
+                case "$shell_type" in
+                    zsh)
+                        if command -v rehash >/dev/null 2>&1; then
+                            rehash 2>/dev/null || true
+                        fi
+                        ;;
+                    fish)
+                        # Fish doesn't need manual cache refresh
+                        ;;
+                esac
+
+                # Method 3: Re-export PATH
+                export PATH="$PATH:$INSTALL_DIR"
+
                 sleep 1
             fi
 
@@ -245,19 +520,25 @@ verify_installation() {
         done
 
         if [ "$command_available" = true ]; then
-            print_success "Installation verified! dcon command is ready to use."
-            print_status "Testing final command execution..."
-            local version_output
-            version_output=$("$BINARY_NAME" --version 2>&1)
-            print_status "✓ dcon version: $version_output"
+            local final_version
+            final_version=$("$BINARY_NAME" --version 2>&1)
+            print_success "🎉 Installation verified! dcon command is ready to use."
+            print_status "✓ Final test: $final_version"
+            return 0
         else
-            print_error "Installation completed but dcon command is not immediately available in current session"
-            print_error "The binary is installed at: $INSTALL_DIR/$BINARY_NAME"
-            print_error "You may need to restart your terminal or run: source ~/.zshrc (or ~/.bashrc)"
-            exit 1
+            print_warning "Installation completed but dcon command is not immediately available in current session"
+            print_status "The binary is installed at: $INSTALL_DIR/$BINARY_NAME"
+            print_status "This is normal when installing via curl | bash"
+
+            # Provide manual instructions
+            provide_manual_instructions "$shell_type" "$shell_profile"
+
+            # Don't exit with error - installation was successful, just needs manual activation
+            return 1
         fi
     else
         print_error "Installation verification failed - binary not found or not executable"
+        print_error "Expected location: $INSTALL_DIR/$BINARY_NAME"
         exit 1
     fi
 }
@@ -281,19 +562,32 @@ main() {
     # Install binary
     install_binary "$temp_file"
 
-    # Update PATH
+    # Update PATH and get shell information
+    shell_type=$(detect_shell)
+    shell_profile=$(get_shell_config_file "$shell_type")
     update_path
 
     # Verify installation
-    verify_installation
-
-    print_success "dcon installation completed successfully!"
-    echo ""
-    print_status "🎉 Welcome to dcon - PostgreSQL CLI Tool!"
-    print_status "📖 Documentation: https://github.com/emadbaqeri/dcon"
-    print_status "🐛 Report issues: https://github.com/emadbaqeri/dcon/issues"
-    echo ""
-    print_success "✓ dcon is ready to use! Try: dcon --help"
+    if verify_installation "$shell_type" "$shell_profile"; then
+        # Command is immediately available
+        print_success "dcon installation completed successfully!"
+        echo ""
+        print_status "🎉 Welcome to dcon - PostgreSQL CLI Tool!"
+        print_status "📖 Documentation: https://github.com/emadbaqeri/dcon"
+        print_status "🐛 Report issues: https://github.com/emadbaqeri/dcon/issues"
+        echo ""
+        print_success "✓ dcon is ready to use! Try: dcon --help"
+    else
+        # Command needs manual activation
+        print_success "dcon installation completed successfully!"
+        echo ""
+        print_status "🎉 Welcome to dcon - PostgreSQL CLI Tool!"
+        print_status "📖 Documentation: https://github.com/emadbaqeri/dcon"
+        print_status "🐛 Report issues: https://github.com/emadbaqeri/dcon/issues"
+        echo ""
+        print_warning "⚠️  Please follow the manual setup instructions above to use dcon"
+        print_status "After setup, try: dcon --help"
+    fi
 }
 
 # Handle command line arguments
