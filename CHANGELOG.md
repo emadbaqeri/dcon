@@ -1,3 +1,9 @@
+## [2.1.0](https://github.com/emadbaqeri/dcon/compare/v2.0.4...v2.1.0) (2025-08-10)
+
+### 🚀 Features
+
+* **install:** make dcon command immediately available after installation ([08e4a5a](https://github.com/emadbaqeri/dcon/commit/08e4a5a85cc49eb2be959a59b9cd0feabe3fe2b2))
+
 ## [2.0.4](https://github.com/emadbaqeri/dcon/compare/v2.0.3...v2.0.4) (2025-08-10)
 
 ### 🐛 Bug Fixes
