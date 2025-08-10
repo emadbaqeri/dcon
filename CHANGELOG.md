@@ -1,3 +1,9 @@
+## [2.0.4](https://github.com/emadbaqeri/dcon/compare/v2.0.3...v2.0.4) (2025-08-10)
+
+### 🐛 Bug Fixes
+
+* correct binary name and version reporting ([bccb591](https://github.com/emadbaqeri/dcon/commit/bccb591244fe56558c4ff7eed1a71444a7319d43))
+
 ## [2.0.3](https://github.com/emadbaqeri/dcon/compare/v2.0.2...v2.0.3) (2025-08-09)
 
 ### 🐛 Bug Fixes
