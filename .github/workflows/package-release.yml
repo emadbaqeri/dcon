@@ -1,0 +1,120 @@
+name: Package Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to package'
+        required: true
+        default: 'v2.1.0'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  package-macos:
+    name: Package macOS
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build and package macOS
+        run: |
+          chmod +x packaging/macos/build-dmg.sh
+          ./packaging/macos/build-dmg.sh
+
+      - name: Upload macOS DMG
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          files: target/macos/dcon-*-macos.dmg
+          fail_on_unmatched_files: true
+
+  package-linux:
+    name: Package Linux
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install packaging dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev wget
+
+      - name: Build and package Linux DEB
+        run: |
+          chmod +x packaging/linux/build-deb.sh
+          ./packaging/linux/build-deb.sh
+
+      - name: Build and package Linux AppImage
+        run: |
+          chmod +x packaging/linux/build-appimage.sh
+          ./packaging/linux/build-appimage.sh
+
+      - name: Upload Linux packages
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          files: |
+            target/linux/dcon_*_amd64.deb
+            target/linux/dcon-*-x86_64.AppImage
+          fail_on_unmatched_files: true
+
+  package-windows:
+    name: Package Windows
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build and package Windows
+        run: |
+          powershell.exe -ExecutionPolicy Bypass -File "packaging/windows/build-installer.ps1"
+
+      - name: Upload Windows package
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          files: target/windows/dcon-*-windows.zip
+          fail_on_unmatched_files: true

@@ -1,53 +1,103 @@
-# 🐘 dcon - PostgreSQL CLI Tool
+# 🐘 dcon - PostgreSQL Database Management Tool
 
 [![Rust](https://img.shields.io/badge/rust-1.70+-orange.svg)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
+[![CLI](https://img.shields.io/badge/interface-CLI-blue.svg)]()
+[![GUI](https://img.shields.io/badge/interface-GUI-green.svg)]()
 
-A powerful, modern PostgreSQL command-line interface tool built in Rust. **dcon** provides an intuitive way to manage PostgreSQL databases, execute queries, and perform CRUD operations with beautiful formatted output.
+A powerful, modern PostgreSQL database management tool built in Rust. **dcon** provides both command-line and graphical interfaces for managing PostgreSQL databases, executing queries, and performing database operations with beautiful formatted output.
+
+## 🎯 Dual Interface Architecture
+
+**dcon** offers two complementary interfaces:
+
+- **🖥️ CLI (Command Line Interface)** - Perfect for automation, scripting, and terminal-based workflows
+- **🖱️ GUI (Graphical User Interface)** - Modern desktop application with intuitive visual interface *(coming soon)*
+
+Both interfaces share the same powerful core functionality, allowing you to choose the best tool for your workflow.
 
 ## ✨ Features
 
-- 🚀 **Fast & Efficient** - Built with Rust for maximum performance
-- 🎨 **Beautiful Output** - Colored tables, JSON, and CSV formatting
-- 🔧 **Interactive Mode** - REPL-style interface for database exploration
-- 📊 **Multiple Output Formats** - Table, JSON, and CSV support
-- 🔐 **Secure Connections** - Support for various authentication methods
-- 🗄️ **Database Management** - Create, list, and manage databases
-- 📋 **Table Operations** - Comprehensive table management and inspection
-- 🔍 **CRUD Operations** - Full Create, Read, Update, Delete functionality
-- 🎯 **Custom Queries** - Execute any SQL query with formatted results
-- 🌈 **Rich CLI Experience** - Progress indicators, colored output, and intuitive commands
+### 🚀 Core Features
+- **Fast & Efficient** - Built with Rust for maximum performance
+- **Secure Connections** - Support for various PostgreSQL authentication methods
+- **Database Management** - Create, list, and manage databases
+- **Table Operations** - Comprehensive table management and inspection
+- **CRUD Operations** - Full Create, Read, Update, Delete functionality
+- **Custom Queries** - Execute any SQL query with formatted results
 
-## 🚀 Quick Start
+### 💻 CLI Features
+- **Beautiful Output** - Colored tables, JSON, and CSV formatting
+- **Interactive Mode** - REPL-style interface for database exploration
+- **Multiple Output Formats** - Table, JSON, and CSV support
+- **Rich CLI Experience** - Progress indicators, colored output, and intuitive commands
+- **Scriptable** - Perfect for automation and CI/CD pipelines
 
-### Installation
+### 🖥️ GUI Features *(Coming Soon)*
+- **Modern Interface** - Built with gpui-rs for native performance
+- **Visual Query Builder** - Drag-and-drop query construction
+- **Data Visualization** - Charts and graphs for query results
+- **Connection Manager** - Save and organize database connections
+- **Cross-Platform** - Native applications for macOS, Linux, and Windows
 
-#### 🚀 Quick Install (Recommended)
+## 🚀 Installation
 
-**macOS & Linux:**
+### 📦 Package Installers (Recommended)
+
+#### macOS
 ```bash
-curl -sSL https://raw.githubusercontent.com/emadbaqeri/dcon/main/scripts/install-oneliner.sh | bash
+# Download and install DMG
+curl -L -o dcon.dmg https://github.com/emadbaqeri/dcon/releases/latest/download/dcon-2.1.0-macos.dmg
+open dcon.dmg
 ```
 
-**Windows (PowerShell):**
+#### Linux
+```bash
+# Ubuntu/Debian - Install DEB package
+curl -L -o dcon.deb https://github.com/emadbaqeri/dcon/releases/latest/download/dcon_2.1.0_amd64.deb
+sudo dpkg -i dcon.deb
+
+# Or use AppImage (universal)
+curl -L -o dcon.AppImage https://github.com/emadbaqeri/dcon/releases/latest/download/dcon-2.1.0-x86_64.AppImage
+chmod +x dcon.AppImage
+./dcon.AppImage
+```
+
+#### Windows
 ```powershell
-iwr -useb https://raw.githubusercontent.com/emadbaqeri/dcon/main/scripts/install.ps1 | iex
+# Download and extract ZIP package
+Invoke-WebRequest -Uri "https://github.com/emadbaqeri/dcon/releases/latest/download/dcon-2.1.0-windows.zip" -OutFile "dcon.zip"
+Expand-Archive -Path "dcon.zip" -DestinationPath "dcon"
+cd dcon
+.\install.bat
 ```
 
-#### 📦 Pre-built Binaries
+### 🔧 Alternative Installation Methods
 
-Download the latest pre-built binaries from [GitHub Releases](https://github.com/emadbaqeri/dcon/releases/tag/v1.0.0):
+#### Pre-built Binaries
+
+Download the latest binaries from [GitHub Releases](https://github.com/emadbaqeri/dcon/releases/latest):
 
 - **macOS**: `dcon-x86_64-apple-darwin` (Intel) or `dcon-aarch64-apple-darwin` (Apple Silicon)
 - **Linux**: `dcon-x86_64-unknown-linux-gnu` (x86_64) or `dcon-aarch64-unknown-linux-gnu` (ARM64)
 - **Windows**: `dcon-x86_64-pc-windows-msvc.exe` (x86_64) or `dcon-aarch64-pc-windows-msvc.exe` (ARM64)
 
-#### 🔧 Build from Source
+#### Build from Source
 
 ```bash
 # Clone the repository
 git clone https://github.com/emadbaqeri/dcon.git
+cd dcon
+
+# Build CLI only
+./scripts/build-cli.sh
+
+# Or build all components (when GUI is available)
+./scripts/build-all.sh
+
+# Install CLI
+./scripts/build-cli.sh --install
 cd dcon
 
 # Build the project
@@ -322,6 +372,46 @@ git push --no-verify      # Skip pre-push checks
 | `crud` | Create, Read, Update, Delete operations |
 | `query` | Execute custom SQL queries |
 | `interactive` | Start interactive mode |
+
+## 🏗️ Project Architecture
+
+**dcon** is built with a modular architecture that supports both CLI and GUI interfaces:
+
+```
+dcon/
+├── crates/
+│   ├── dcon-core/          # Shared core library
+│   │   ├── src/
+│   │   │   ├── connection.rs    # PostgreSQL connection management
+│   │   │   ├── database.rs      # Database operations trait
+│   │   │   ├── models/          # Data models and types
+│   │   │   ├── query.rs         # Query building and execution
+│   │   │   └── error.rs         # Error handling
+│   │   └── Cargo.toml
+│   ├── dcon-cli/           # Command-line interface
+│   │   ├── src/
+│   │   │   ├── cli/            # CLI argument parsing
+│   │   │   ├── commands.rs     # Command implementations
+│   │   │   ├── output.rs       # Output formatting
+│   │   │   └── main.rs
+│   │   └── Cargo.toml
+│   └── dcon-gui/           # Graphical user interface (coming soon)
+│       ├── src/
+│       │   ├── app.rs          # Main application state
+│       │   ├── ui/             # UI components
+│       │   └── main.rs
+│       └── Cargo.toml
+├── scripts/                # Build and packaging scripts
+├── packaging/              # Platform-specific packaging
+└── Cargo.toml             # Workspace configuration
+```
+
+### Design Principles
+
+- **Shared Core**: All database logic is in `dcon-core` to avoid duplication
+- **Interface Separation**: CLI and GUI are separate binaries with their own UX patterns
+- **Modular Design**: Each component has clear responsibilities and boundaries
+- **Cross-Platform**: Native packaging for macOS, Linux, and Windows
 
 ## 🤝 Contributing
 

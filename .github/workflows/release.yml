@@ -95,12 +95,12 @@ jobs:
         with:
           key: ${{ matrix.target }}
 
-      - name: Build binary
+      - name: Build CLI binary
         shell: bash
         run: |
-          echo "Building for target: ${{ matrix.target }}"
-          cargo build --release --target ${{ matrix.target }}
-          echo "Build completed for ${{ matrix.target }}"
+          echo "Building CLI for target: ${{ matrix.target }}"
+          cargo build --release --target ${{ matrix.target }} -p dcon
+          echo "CLI build completed for ${{ matrix.target }}"
 
       - name: Verify binary exists
         shell: bash

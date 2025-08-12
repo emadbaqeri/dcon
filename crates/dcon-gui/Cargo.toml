@@ -1,0 +1,42 @@
+[package]
+name = "dcon-gui"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+description = "A modern PostgreSQL GUI application built with gpui-rs"
+keywords = ["postgresql", "database", "gui", "sql", "postgres"]
+categories = ["gui", "database"]
+
+[[bin]]
+name = "dcon-gui"
+path = "src/main.rs"
+
+[dependencies]
+dcon-core = { path = "../dcon-core" }
+gpui = { workspace = true }
+tokio = { workspace = true }
+async-trait = { workspace = true }
+uuid = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+futures = { workspace = true }
+
+# Text editing capabilities
+ropey = { workspace = true }
+tree-sitter = { workspace = true }
+tree-sitter-sql = { workspace = true }
+
+# Additional database drivers for GUI
+sqlx = { workspace = true }
+mongodb = { workspace = true }
+
+[features]
+default = []

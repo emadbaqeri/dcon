@@ -1,0 +1,34 @@
+[package]
+name = "dcon"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+description = "A powerful PostgreSQL command-line interface tool built in Rust"
+keywords = ["postgresql", "database", "cli", "sql", "postgres"]
+categories = ["command-line-utilities", "database"]
+
+[[bin]]
+name = "dcon"
+path = "src/main.rs"
+
+[dependencies]
+dcon-core = { path = "../dcon-core", features = ["cli-table"] }
+tokio = { workspace = true }
+clap = { workspace = true }
+colored = { workspace = true }
+tabled = { workspace = true }
+dialoguer = { workspace = true }
+indicatif = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+url = { workspace = true }
+chrono = { workspace = true }
+tokio-postgres = { workspace = true }
+
+[features]
+default = []

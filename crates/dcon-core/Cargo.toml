@@ -1,0 +1,31 @@
+[package]
+name = "dcon-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+description = "Core library for dcon - PostgreSQL database operations and models"
+keywords = ["postgresql", "database", "sql", "postgres"]
+categories = ["database"]
+
+[dependencies]
+tokio = { workspace = true }
+tokio-postgres = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+url = { workspace = true }
+regex = { workspace = true }
+
+# Optional CLI table formatting support
+tabled = { workspace = true, optional = true }
+
+[features]
+default = []
+cli-table = ["tabled"]
